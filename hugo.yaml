@@ -1,0 +1,31 @@
+baseURL: https://example.org/
+languageCode: en-us
+theme: ["PaperMod"]
+menus:
+  main:
+    - name: Home
+      pageRef: /
+      weight: 10
+    - name: Posts
+      pageRef: /posts
+      weight: 20
+    - name: Search
+      pageRef: /search
+      weight: 30
+outputs:
+  home:
+    - HTML
+    - RSS
+    - JSON
+params:
+  ShowCodeCopyButtons: true
+  hideFooter: true
+  homeInfoParams:
+    Title: Hello 👋 I'm Suraj Patil
+    Content: Software Engineer
+
+  socialIcons: # optional
+    - name: "linkedin"
+      url: "https://www.linkedin.com/in/patilsuraj767/"
+    - name: "github"
+      url: "https://github.com/patilsuraj767"
