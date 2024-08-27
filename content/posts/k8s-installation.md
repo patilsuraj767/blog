@@ -31,12 +31,11 @@ sudo apt-get update -y
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
 
 
-# Installing kubectl
+# Installing kubectl, kubelet and kubeadm
 
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 rm -rf kubectl
-
 
 sudo swapoff -a
 sudo apt-get install -y apt-transport-https ca-certificates curl gpg -y
@@ -67,17 +66,56 @@ sudo systemctl start cri-docker.socket
 
 
 # Installing cluster
+
 kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket unix:///var/run/cri-dockerd.sock
 
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
-# Install calico
+# Installing calico
+
 kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.1/manifests/tigera-operator.yaml
 kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.1/manifests/custom-resources.yaml
 kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 
+
+# Creating default storage class
+
+mkdir -p /var/k8s-storage/pv-{0..99} ; chmod -R 777 /var/k8s-storage
+
+for i in {0..99}; do
+  kubectl create -f - <<EOF
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-$i
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+  - ReadWriteOnce
+  - ReadWriteMany
+  persistentVolumeReclaimPolicy: Recycle
+  hostPath:
+    path: "/var/k8s-storage/pv-$i"
+EOF
+done
+
+kubectl create -f - <<EOF
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: manual
+  annotations:
+    storageclass.kubernetes.io/is-default-class: 'true'
+provisioner: kubernetes.io/no-provisioner
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+EOF
 
 ```
 
