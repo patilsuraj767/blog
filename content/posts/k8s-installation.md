@@ -99,7 +99,6 @@ spec:
   accessModes:
   - ReadWriteOnce
   - ReadWriteMany
-  persistentVolumeReclaimPolicy: Recycle
   hostPath:
     path: "/var/k8s-storage/pv-$i"
 EOF
